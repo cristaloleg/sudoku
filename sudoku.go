@@ -139,3 +139,54 @@ func getMin(puzzle *Puzzle) int {
 	}
 	return minSquare
 }
+
+func init() {
+	neighbors = make([][]int, 81)
+	for i := 0; i < 81; i++ {
+		neighbors[i] = make([]int, 20)
+		copy(neighbors[i][:4], closest(i))
+
+		k := 4
+		for j := 0; j < 10; j++ {
+			if i != (i/9)*9+j {
+				neighbors[i][k] = (i/9)*9 + j
+				k++
+			}
+		}
+
+		k = 12
+		for j := 0; j < 9; j++ {
+			if i != i%9+(j*9) {
+				neighbors[i][k] = i%9 + j*9
+				k++
+			}
+		}
+	}
+}
+
+func closest(i int) []int {
+	t, p := i%3, (i/9)%3
+	a, b, c, d := 0, 0, 0, 0
+	switch t {
+	case 0:
+		a, b = 1, 2
+	case 1:
+		a, b = -1, 1
+	case 2:
+		a, b = -1, -2
+	}
+	switch p {
+	case 0:
+		c, d = 1, 2
+	case 1:
+		c, d = -1, 1
+	case 2:
+		c, d = -1, -2
+	}
+	return []int{
+		i + c*9 + a,
+		i + c*9 + b,
+		i + d*9 + a,
+		i + d*9 + b,
+	}
+}
