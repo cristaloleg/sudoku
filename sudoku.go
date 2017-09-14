@@ -50,6 +50,10 @@ func offBit(x, mask uint16) uint16 {
 	return x &^ mask
 }
 
+func isPower2(x uint16) bool {
+	return (x & (x - 1)) == 0
+}
+
 func prepare(puzzle *Puzzle) *Puzzle {
 	solution := newPuzzle()
 	for i := 0; i < 81; i++ {
@@ -92,4 +96,46 @@ func eliminate(puzzle *Puzzle, idx int, mask uint16) bool {
 		}
 	}
 	return true
+}
+
+func search(puzzle *Puzzle) *Puzzle {
+	for i := 0; i < 81; i++ {
+		value := puzzle.board[i]
+		if isPower2(value) {
+			continue
+		}
+
+		minSquare := getMin(puzzle)
+		value = puzzle.board[minSquare]
+
+		for i := 1; i <= 9; i++ {
+			mask := getMask(i)
+			if !hasBit(value, mask) {
+				continue
+			}
+			tmp := newPuzzle()
+			copy(tmp.board, puzzle.board)
+
+			if assign(tmp, minSquare, mask) {
+				res := search(tmp)
+				if res != nil {
+					return res
+				}
+			}
+		}
+		return nil
+	}
+	return puzzle
+}
+
+func getMin(puzzle *Puzzle) int {
+	minSquare, minSize := 0, 9
+	for j := 0; j < 81; j++ {
+		size := bits.OnesCount16(puzzle.board[j])
+		if size > 1 && size <= minSize {
+			minSquare = j
+			minSize = size
+		}
+	}
+	return minSquare
 }
