@@ -1,15 +1,17 @@
 package sudoku
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
 var neighbors [][]int
 
-// Puzzle represents sudoku's board
+// Puzzle represents Sudoku's board
 type Puzzle struct {
 	board []uint16
 }
 
-// New parses string and returns a puzzle, nil if board is incorrect
+// New parses a string and returns a puzzle, nil if board is incorrect
 func New(board string) *Puzzle {
 	if len(board) != 81 {
 		return nil
@@ -18,6 +20,7 @@ func New(board string) *Puzzle {
 	return p
 }
 
+// newPuzzle ...
 func newPuzzle() *Puzzle {
 	p := &Puzzle{
 		board: make([]uint16, 81),
@@ -25,6 +28,7 @@ func newPuzzle() *Puzzle {
 	return p
 }
 
+// parseGrid ...
 func parseGrid(grid string) *Puzzle {
 	if len(grid) != 81 {
 		return nil
@@ -38,22 +42,7 @@ func parseGrid(grid string) *Puzzle {
 	return puzzle
 }
 
-func getMask(x int) uint16 {
-	return 1 << uint16(x)
-}
-
-func hasBit(x, mask uint16) bool {
-	return (x & mask) == mask
-}
-
-func offBit(x, mask uint16) uint16 {
-	return x &^ mask
-}
-
-func isPower2(x uint16) bool {
-	return (x & (x - 1)) == 0
-}
-
+// prepare ...
 func prepare(puzzle *Puzzle) *Puzzle {
 	solution := newPuzzle()
 	for i := 0; i < 81; i++ {
@@ -68,6 +57,8 @@ func prepare(puzzle *Puzzle) *Puzzle {
 	return solution
 }
 
+// assign tries to assign mask for a given tile
+// and than eliminates it from neighbors of the tile
 func assign(puzzle *Puzzle, idx int, mask uint16) bool {
 	for i := 1; i <= 9; i++ {
 		tmp := getMask(i)
@@ -78,16 +69,20 @@ func assign(puzzle *Puzzle, idx int, mask uint16) bool {
 	return true
 }
 
+// eliminate ...
 func eliminate(puzzle *Puzzle, idx int, mask uint16) bool {
 	value := puzzle.board[idx]
 	if !hasBit(value, mask) {
 		return true
 	}
+
 	value = offBit(value, mask)
 	puzzle.board[idx] = value
+
 	if value == 0 {
 		return false
 	}
+
 	if bits.OnesCount16(value) == 1 {
 		for _, i := range neighbors[idx] {
 			if !eliminate(puzzle, i, value) {
@@ -98,10 +93,11 @@ func eliminate(puzzle *Puzzle, idx int, mask uint16) bool {
 	return true
 }
 
+// search starts recursive search for a solution
 func search(puzzle *Puzzle) *Puzzle {
 	for i := 0; i < 81; i++ {
 		value := puzzle.board[i]
-		if isPower2(value) {
+		if hasOneBit(value) {
 			continue
 		}
 
@@ -128,6 +124,7 @@ func search(puzzle *Puzzle) *Puzzle {
 	return puzzle
 }
 
+// getMin returns an element with minimum possible options
 func getMin(puzzle *Puzzle) int {
 	minSquare, minSize := 0, 9
 	for j := 0; j < 81; j++ {
@@ -141,6 +138,10 @@ func getMin(puzzle *Puzzle) int {
 }
 
 func init() {
+	makeNeighbors()
+}
+
+func makeNeighbors() {
 	neighbors = make([][]int, 81)
 	for i := 0; i < 81; i++ {
 		neighbors[i] = make([]int, 20)
@@ -164,6 +165,7 @@ func init() {
 	}
 }
 
+// closest returns 4 elements neighbors for a given one
 func closest(i int) []int {
 	t, p := i%3, (i/9)%3
 	a, b, c, d := 0, 0, 0, 0
@@ -189,4 +191,20 @@ func closest(i int) []int {
 		i + d*9 + a,
 		i + d*9 + b,
 	}
+}
+
+func getMask(x int) uint16 {
+	return 1 << uint16(x)
+}
+
+func hasOneBit(x uint16) bool {
+	return (x & (x - 1)) == 0
+}
+
+func hasBit(x, mask uint16) bool {
+	return (x & mask) == mask
+}
+
+func offBit(x, mask uint16) uint16 {
+	return x &^ mask
 }
